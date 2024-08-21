@@ -1,4 +1,7 @@
-# 라이브러리
+# Sfacspace-Crawler
+
+## 라이브러리
 
 - selenium
-- googletrans 4.0.0rc1
+- selenium-wire
+- googletrans 4.0.0-rc1
