@@ -1,84 +1,140 @@
-import time
+import os
 import json
+import numpy as np
+from dotenv import load_dotenv
 from selenium import webdriver
 from seleniumwire import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 
+load_dotenv()
+
+options = webdriver.ChromeOptions()
+# 브라우저를 띄우지 않고 크롤링하는 옵션
+options.add_argument('--headless')
+
+WAIT_TIME = 30
+
 
 def cve_crawler():
+    # 기사 url 수집
     def cve_href_crawling():
-        browser = webdriver.Chrome()
-        wait = WebDriverWait(browser, 10)
+        href_browser = webdriver.Chrome(options=options)
+        href_wait = WebDriverWait(href_browser, WAIT_TIME)
 
         try:
-            browser.get('https://www.cve.org/Media/News/AllNews')
+            href_browser.get(os.getenv('CNV_URL'))
 
-            link_list = []
+            href_list = []
 
             # 링크 가져오기
             while True:
-                items = browser.find_elements(By.CSS_SELECTOR, '.media-content > .content > .title > a')
+                items = href_browser.find_elements(By.CSS_SELECTOR, '.media-content > .content > .title > a')
 
                 for item in items:
                     href = item.get_attribute('href')
-                    link_list.append(href)
+                    href_list.append(href)
                 try:
-                    wait.until(EC.element_to_be_clickable((By.CLASS_NAME, 'pagination-next'))).click()
-                    wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, '.content > .title')))
+                    href_wait.until(EC.element_to_be_clickable((By.CLASS_NAME, 'pagination-next'))).click()
+                    href_wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, '.content .title')))
                 except Exception as e:
                     print(e)
                     break
         finally:
-            browser.quit()
+            href_browser.quit()
 
-        return link_list
+        return href_list
 
-    link_list = cve_href_crawling()
+    url_list = cve_href_crawling()
 
-    browser = webdriver.Chrome()
-    wait = WebDriverWait(browser, 30)
+    browser = webdriver.Chrome(options=options)
+    wait = WebDriverWait(browser, WAIT_TIME)
 
-    data = []
+    data = np.array([])
 
-    for link in link_list:
-        browser.get(link)
+    for url in url_list:
+        browser.get(url)
 
+        # 로딩 대기
         wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, '.content > .title')))
 
-        article_id = ''.join(link.split('/')[-4:])
+        article_id = ''.join(url.split('/')[-4:])
         title = browser.find_element(By.CSS_SELECTOR, '.content > .title')
         date = browser.find_element(By.XPATH, '//*[@id="cve-main-page-content"]/div/span/div/time')
         content = browser.find_element(By.XPATH, '//*[@id="cve-main-page-content"]/div/div')
 
-        data.append(
-            {'type': 'cve', 'article_id': article_id, 'title': title.text,
-             'published_at': date.get_attribute('datetime'), 'content': content.get_attribute('innerHTML'),
-             'content_text': content.text})
+        data = np.append(data, np.array([{'source': 'cve', 'article_id': article_id, 'title': title.text,
+                                          'published_at': date.get_attribute('datetime'),
+                                          'content': content.get_attribute('innerHTML'),
+                                          'content_text': content.text}]))
 
-    return data
+        print(title.text)
+
+    return np.flip(data)
 
 
 def cnnvd_crawler():
     browser = webdriver.Chrome()
+    wait = WebDriverWait(browser, WAIT_TIME)
 
-    data = []
+    try:
+        # cnnvd 사이트 접속
+        browser.get(os.getenv('CNNVD_URL'))
 
-    # cnnvd 사이트 접속
-    browser.get('https://www.cnnvd.org.cn/home/netSecurity')
+        data = np.array([])
 
-    # 로딩 대기
-    time.sleep(15)
+        while True:
+            # 로딩 상태가 아닐 때까지 대기
+            wait.until(lambda browser: browser.find_element(By.CLASS_NAME, 'el-loading-mask').value_of_css_property(
+                'display') == 'none')
 
-    # netSecurityList response 값 가져오기
-    for request in browser.requests:
-        if request.response and ("/netSecurityList" in request.url):
-            data = [{'type': 'cnnvd', 'article_id': res['netSecurityId'], 'title': res['netSecurityName'],
-                     'published_at': res['publishTime'],
-                     'content': res['enclosureContent'], 'content_text': res['contentStr']} for res in
-                    json.loads(request.response.body)['data']['records']]
+            for request in browser.requests:
+                if request.response and ("/netSecurityList" in request.url):
+                    print(json.loads(request.response.body)['data']['pageIndex'])
 
-    browser.quit()
+                    # 이전 request 기록 삭제
+                    del browser.requests
+                    break
 
-    return data
+            try:
+                wait.until(EC.element_to_be_clickable((By.CLASS_NAME, 'btn-next'))).click()
+            except Exception as e:
+                print(e)
+                break
+    finally:
+        browser.quit()
+
+        # while True:
+        #     for request in browser.requests:
+        #         if request.response and ("/netSecurityList" in request.url):
+        #             for res in json.loads(request.response.body)['data']['records']:
+        #                 data = np.append(data, np.array(
+        #                     [{'source': 'cnnvd', 'article_id': res['netSecurityId'], 'title': res['netSecurityName'],
+        #                       'published_at': res['publishTime'],
+        #                       'content': res['enclosureContent'], 'content_text': res['contentStr']}]))
+    # finally:
+    #     browser.quit()
+    #
+    # return np.flip(data)
+
+    # while True:
+    #     try:
+    #         # 로딩 대기
+    #         wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, '.content .content-title')))
+    #
+    #         # netSecurityList response 값 가져오기
+    #         for request in browser.requests:
+    #             if request.response and ("/netSecurityList" in request.url):
+    #                 for res in json.loads(request.response.body)['data']['records']:
+    #                     data = np.append(data, np.array(
+    #                         [{'source': 'cnnvd', 'article_id': res['netSecurityId'], 'title': res['netSecurityName'],
+    #                           'published_at': res['publishTime'],
+    #                           'content': res['enclosureContent'], 'content_text': res['contentStr']}]))
+    #
+    #         wait.until(EC.element_to_be_clickable((By.CSS_SELECTOR, '.el-pagination .btn-prev'))).click()
+    #     except Exception as e:
+    #         print(e)
+    #         break
+
+    # return np.flip(data)
