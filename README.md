@@ -2,12 +2,15 @@
 
 ## 라이브러리
 
-### selenium
+### 패키지 설치
 
-### selenium-wire
+```commandline
+pip install -r requirements.txt
+```
 
-### googletrans 4.0.0-rc1
-
-### beautifulsoup4
-
-### python-dotenv
+- selenium
+- selenium-wire
+- beautifulsoup4
+- deep_translator
+- konlpy
+- sklearn

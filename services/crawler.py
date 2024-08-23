@@ -18,7 +18,7 @@ WAIT_TIME = 30
 
 
 def cve_crawler():
-    print('cve 크롤링 중')
+    print('cve 크롤링 시작')
 
     # 기사 url 수집
     def cve_href_crawling():
@@ -47,7 +47,7 @@ def cve_crawler():
         finally:
             href_browser.quit()
 
-        return href_list
+        return list(reversed(href_list))
 
     url_list = cve_href_crawling()
 
@@ -67,16 +67,19 @@ def cve_crawler():
         date = browser.find_element(By.XPATH, '//*[@id="cve-main-page-content"]/div/span/div/time')
         content = browser.find_element(By.XPATH, '//*[@id="cve-main-page-content"]/div/div')
 
-        data.append({'source': 'cve', 'article_id': article_id, 'title': title.text,
-                     'published_at': date.get_attribute('datetime'),
+        data.append({'source': 'cve',
+                     'article_id': article_id,
+                     'title': title.text,
+                     'crawled_at': date.get_attribute('datetime'),
                      'content_html': content.get_attribute('innerHTML'),
                      'content_text': content.text})
 
-    return list(reversed(data))
+    print('cve 크롤링 종료')
+    return data
 
 
 def cnnvd_crawler():
-    print('cnnvd 크롤링 중')
+    print('cnnvd 크롤링 시작')
 
     browser = webdriver.Chrome(options=options)
     wait = WebDriverWait(browser, WAIT_TIME)
@@ -95,9 +98,11 @@ def cnnvd_crawler():
             for request in browser.requests:
                 if request.response and ("/netSecurityList" in request.url):
                     for res in json.loads(request.response.body)['data']['records']:
-                        data.append({'source': 'cnnvd', 'article_id': res['netSecurityId'],
+                        data.append({'source': 'cnnvd',
+                                     'article_id': res['netSecurityId'],
                                      'title': res['netSecurityName'],
-                                     'published_at': res['publishTime'], 'content_html': res['enclosureContent'],
+                                     'crawled_at': res['publishTime'],
+                                     'content_html': res['enclosureContent'],
                                      'content_text': res['contentStr']})
 
                     # 이전 request 기록 삭제
@@ -107,7 +112,7 @@ def cnnvd_crawler():
             try:
                 wait.until(EC.element_to_be_clickable((By.CLASS_NAME, 'btn-next'))).click()
             except Exception as e:
-                print(e)
+                # 진행 불가 시 반복문 종료
                 break
 
     except Exception as e:
@@ -115,4 +120,5 @@ def cnnvd_crawler():
     finally:
         browser.quit()
 
+    print('cnnvd 크롤링 종료')
     return list(reversed(data))
