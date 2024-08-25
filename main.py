@@ -8,29 +8,19 @@ cve_news = cve_crawler()
 cnnvd_news = cnnvd_crawler()
 
 # cve 번역
-translated_news_cve = [
-    news | {
-        'title': translate_text(news['title']),
-        'content_html': (content_cve := translate_html_content(news['content_html'])[0]),
-        'content_text': content_cve[1],
-    }
-    for news in cve_news
-]
+for news in cve_news:
+    news['title'] = translate_text(news['title'])
+    news['content_html'], news['content_text'] = translate_html_content(news['content_html'])
 
 # cnnvd 번역
-translated_news_cnnvd = [
-    news | {
-        'title': translate_text(news['title']),
-        'content_html': (content_cnnvd := translate_html_content(news['content_html'])[0]),
-        'content_text': content_cnnvd[1],
-    }
-    for news in cnnvd_news
-]
+for news in cnnvd_news:
+    news['title'] = translate_text(news['title'])
+    news['content_html'], news['content_text'] = translate_html_content(news['content_html'])
 
-# cve 태그 N개 생성 (default: 10)
-for news in translated_news_cve:
+# cve 태그 N개 생성 (default: 5)
+for news in cve_news:
     print(extract_tag(news['content_text']))
 
-# cnnvd 태그 N개 생성 (default: 10)
-for news in translated_news_cnnvd:
+# cnnvd 태그 N개 생성 (default: 5)
+for news in cnnvd_news:
     print(extract_tag(news['content_text']))

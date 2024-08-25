@@ -14,17 +14,18 @@ def translate_text(text):
         else:
             return translator.translate(text) or ''
     except Exception as e:
-        # 에러인 경우 빈 문자 반환
-        return ''
+        # 에러인 경우 원본 텍스트 반환
+        return text
 
 
 def translate_html_content(html_content):
     soup = BeautifulSoup(html_content, 'html.parser')
     content_text = []
 
-    for element in soup.find_all(text=True):
-        translated_text = translate_text(element.strip() or '')
-        element.replace_with(translated_text)
-        content_text.append(translated_text)
+    for element in soup.find_all('p'):
+        if element.text != '&nbsp;':
+            translated_text = translate_text(element.text)
+            element.string = translated_text
+            content_text.append(translated_text)
 
     return str(soup), ' '.join(content_text)
