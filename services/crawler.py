@@ -78,7 +78,7 @@ def cve_crawler():
         data.append({'source': 'cve',
                      'article_id': article_id,
                      'title': title.text,
-                     'crawled_at': date.get_attribute('datetime'),
+                     'published_at': date.get_attribute('datetime'),
                      'content_html': content.get_attribute('innerHTML'),
                      'content_text': content.text})
 
@@ -109,7 +109,7 @@ def cnnvd_crawler():
                         data.append({'source': 'cnnvd',
                                      'article_id': res['netSecurityId'],
                                      'title': res['netSecurityName'],
-                                     'crawled_at': res['publishTime'],
+                                     'published_at': res['publishTime'],
                                      'content_html': res['enclosureContent'],
                                      'content_text': res['contentStr']})
 

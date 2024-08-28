@@ -23,7 +23,7 @@ def extract_tag(text, limit=5):
 
         words_score = sorted(list(zip(words, score)), key=lambda x: x[1], reverse=True)
 
-        return [word for word, pos in words_score[:limit]]
+        return [word for word, _ in words_score[:limit]]
     except ValueError as e:
         # 값이 없는 경우 기본 값 리턴
         return ['보안']
