@@ -2,7 +2,7 @@ name: Crawling & Firestore
 
 on:
   schedule:
-    - cron: "0 15 * * *"
+    - cron: "* * * * *"
 
 jobs:
   build:
@@ -10,22 +10,22 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v4
-    - name: Set up Python 3.10
-      uses: actions/setup-python@v3
-      with:
-        python-version: "3.12"
-        
-    - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install -r requirements.txt
-        
-    - name: Setting .env
-      run: |
-         echo "FIRESTORE_KEY=${{ secrets.FIRESTORE_KEY }}" >> .env
-         echo "CNV_URL=${{ secrets.CNV_URL }}" >> .env
-         echo "CNNVD_URL=${{ secrets.CNNVD_URL }}" >> .env
-         
-    - name: Run python script
-      run: python main.py
+      - uses: actions/checkout@v4
+      - name: Set up Python 3.10
+        uses: actions/setup-python@v3
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Setting .env
+        run: |
+          echo "FIRESTORE_KEY=${{ secrets.FIRESTORE_KEY }}" >> .env
+          echo "CNV_URL=${{ secrets.CNV_URL }}" >> .env
+          echo "CNNVD_URL=${{ secrets.CNNVD_URL }}" >> .env
+
+      - name: Run python script
+        run: python main.py
