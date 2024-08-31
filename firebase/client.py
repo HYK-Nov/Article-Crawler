@@ -8,7 +8,7 @@ from firebase_admin import firestore
 load_dotenv()
 
 # Use a service account.
-service_account_info = json.loads(os.getenv('FIRESTORE_KEY'))
+service_account_info = json.loads(os.getenv('SERVICE_ACCOUNT'))
 cred = credentials.Certificate(service_account_info)
 
 app = firebase_admin.initialize_app(cred)

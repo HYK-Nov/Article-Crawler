@@ -2,7 +2,7 @@ name: Crawling & Firestore
 
 on:
   schedule:
-    - cron: "0 15 * * *"
+    - cron: "*/5 * * * *"
 
 jobs:
   build:
@@ -23,7 +23,7 @@ jobs:
 
       - name: Setting .env
         run: |
-          echo "FIRESTORE_KEY=${{ secrets.FIRESTORE_KEY }}" >> .env
+          echo "SERVICE_ACCOUNT=${{ secrets.SERVICE_ACCOUNT }}" >> .env
           echo "CNV_URL=${{ secrets.CNV_URL }}" >> .env
           echo "CNNVD_URL=${{ secrets.CNNVD_URL }}" >> .env
 
