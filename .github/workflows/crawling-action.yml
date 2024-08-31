@@ -2,7 +2,7 @@ name: Crawling & Firestore
 
 on:
   schedule:
-    - cron: "*/5 * * * *"
+    - cron: "0 15 * * *"
 
 jobs:
   build:
