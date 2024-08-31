@@ -22,11 +22,15 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
-      - name: Setting .env
+      - name: Create .env file
         run: |
           echo "SERVICE_ACCOUNT=${{ secrets.SERVICE_ACCOUNT }}" >> .env
           echo "CNV_URL=${{ secrets.CNV_URL }}" >> .env
           echo "CNNVD_URL=${{ secrets.CNNVD_URL }}" >> .env
 
       - name: Run python script
+        env:
+          SERVICE_ACCOUNT: ${{ secrets.SERVICE_ACCOUNT }}
+          CNV_URL: ${{ secrets.CNV_URL }}
+          CNNVD_URL: ${{ secrets.CNNVD_URL }}
         run: python main.py
