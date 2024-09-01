@@ -22,40 +22,41 @@ options.add_argument(
     'user-agent=options.add_argument("user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.150 Safari/537.36")')
 
 # 최대 대기 시간
-WAIT_TIME = 30
+WAIT_TIME = 180
+
+
+# 기사 url 수집
+def cve_href_crawling():
+    browser = webdriver.Chrome(options=options)
+    wait = WebDriverWait(browser, WAIT_TIME)
+
+    href_list = []
+
+    try:
+        browser.get(os.getenv('CNV_URL'))
+
+        # 링크 가져오기
+        while True:
+            items = browser.find_elements(By.CSS_SELECTOR, '.media-content > .content > .title > a')
+
+            for item in items:
+                href = item.get_attribute('href')
+                href_list.append(href)
+
+            try:
+                wait.until(EC.element_to_be_clickable((By.CLASS_NAME, 'pagination-next'))).click()
+                wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, '.content .title')))
+            except Exception as e:
+                print('CVE url error: ' + e)
+                break
+    finally:
+        browser.quit()
+
+    return list(reversed(href_list))
 
 
 def cve_crawler():
-    print('cve 크롤링 시작')
-
-    # 기사 url 수집
-    def cve_href_crawling():
-        href_browser = webdriver.Chrome(options=options)
-        href_wait = WebDriverWait(href_browser, WAIT_TIME)
-
-        href_list = []
-
-        try:
-            href_browser.get(os.getenv('CNV_URL'))
-
-            # 링크 가져오기
-            while True:
-                items = href_browser.find_elements(By.CSS_SELECTOR, '.media-content > .content > .title > a')
-
-                for item in items:
-                    href = item.get_attribute('href')
-                    href_list.append(href)
-
-                try:
-                    href_wait.until(EC.element_to_be_clickable((By.CLASS_NAME, 'pagination-next'))).click()
-                    href_wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, '.content .title')))
-                except Exception as e:
-                    print(e)
-                    break
-        finally:
-            href_browser.quit()
-
-        return list(reversed(href_list))
+    print('CVE 크롤링 시작')
 
     url_list = cve_href_crawling()
 
@@ -64,30 +65,35 @@ def cve_crawler():
 
     data = []
 
-    for url in url_list:
-        browser.get(url)
+    try:
+        for url in url_list:
+            browser.get(url)
 
-        # 로딩 대기
-        wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, '.content > .title')))
+            # 로딩 대기
+            wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, '.content > .title')))
 
-        article_id = ''.join(url.split('/')[-4:])
-        title = browser.find_element(By.CSS_SELECTOR, '.content > .title')
-        date = browser.find_element(By.XPATH, '//*[@id="cve-main-page-content"]/div/span/div/time')
-        content = browser.find_element(By.XPATH, '//*[@id="cve-main-page-content"]/div/div')
+            article_id = ''.join(url.split('/')[-4:])
+            title = browser.find_element(By.CSS_SELECTOR, '.content > .title')
+            date = browser.find_element(By.XPATH, '//*[@id="cve-main-page-content"]/div/span/div/time')
+            content = browser.find_element(By.XPATH, '//*[@id="cve-main-page-content"]/div/div')
 
-        data.append({'source': 'cve',
-                     'article_id': article_id,
-                     'title': title.text,
-                     'published_at': date.get_attribute('datetime'),
-                     'content_html': content.get_attribute('innerHTML'),
-                     'content_text': content.text})
+            data.append({'source': 'cve',
+                         'article_id': article_id,
+                         'title': title.text,
+                         'published_at': date.get_attribute('datetime'),
+                         'content_html': content.get_attribute('innerHTML'),
+                         'content_text': content.text})
+    except Exception as e:
+        print('CVE error: ' + e)
+    finally:
+        print('CVE 크롤링 종료')
+        browser.quit()
 
-    print('cve 크롤링 종료')
     return data
 
 
 def cnnvd_crawler():
-    print('cnnvd 크롤링 시작')
+    print('CNNVD 크롤링 시작')
 
     browser = webdriver.Chrome(options=options)
     wait = WebDriverWait(browser, WAIT_TIME)
@@ -124,9 +130,9 @@ def cnnvd_crawler():
                 break
 
     except Exception as e:
-        print(e)
+        print('CNNVD error: ' + e)
     finally:
         browser.quit()
 
-    print('cnnvd 크롤링 종료')
+    print('CNNVD 크롤링 종료')
     return list(reversed(data))
