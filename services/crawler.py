@@ -47,12 +47,11 @@ def cve_href_crawling():
                 wait.until(EC.element_to_be_clickable((By.CLASS_NAME, 'pagination-next'))).click()
                 wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, '.content .title')))
             except Exception as e:
-                print('CVE url error: ' + e)
+                print('CVE url error: ' + str(e))
                 break
     finally:
         browser.quit()
-
-    return list(reversed(href_list))
+        return list(reversed(href_list))
 
 
 def cve_crawler():
@@ -84,12 +83,11 @@ def cve_crawler():
                          'content_html': content.get_attribute('innerHTML'),
                          'content_text': content.text})
     except Exception as e:
-        print('CVE error: ' + e)
+        print('CVE error: ' + str(e))
     finally:
         print('CVE 크롤링 종료')
         browser.quit()
-
-    return data
+        return data
 
 
 def cnnvd_crawler():
@@ -130,9 +128,8 @@ def cnnvd_crawler():
                 break
 
     except Exception as e:
-        print('CNNVD error: ' + e)
+        print('CNNVD error: ' + str(e))
     finally:
+        print('CNNVD 크롤링 종료')
         browser.quit()
-
-    print('CNNVD 크롤링 종료')
-    return list(reversed(data))
+        return list(reversed(data))
